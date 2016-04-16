@@ -1,0 +1,1 @@
+wp shell --require="C:\Users\Nabeel\AppData\Roaming\Composer\vendor\psy\psysh\bin\psysh"
