@@ -1,0 +1,13 @@
+{
+    "name": "nabeel/autoload_libs",
+    "require": {
+        "symfony/var-dumper": ">=3.0-stable"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Nabeel Molham",
+            "email": "n.molham@gmail.com"
+        }
+    ]
+}

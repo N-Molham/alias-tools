@@ -1,6 +1,8 @@
 <?php
 error_reporting( E_ALL );
 
+require_once 'vendor/autoload.php';
+
 // new installation name
 $instance_name = $argc >= 2 ? preg_replace( '/\\\$/', '', $argv[1] ) : null;
 $new_instance  = !( isset( $argv[2] ) && 'update' === $argv[2] );
@@ -82,4 +84,8 @@ if ( $new_instance )
 	{
 		die( 'Error: Unable to rename extracted directory.' );
 	}
+}
+else
+{
+	dump( 'update instance' );
 }
