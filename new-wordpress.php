@@ -3,14 +3,45 @@ error_reporting( E_ALL );
 
 require_once 'vendor/autoload.php';
 
-// new installation name
-$instance_name = $argc >= 2 ? preg_replace( '/\\\$/', '', $argv[1] ) : null;
-$new_instance  = !( isset( $argv[2] ) && 'update' === $argv[2] );
+// new or update
+$new_instance = isset( $argv[1] ) && 'new' === $argv[1];
+
+// installation name
+$instance_name = isset( $argv[2] ) ? preg_replace( '/\\\$/', '', $argv[2] ) : null;
+
+// configs
+$wp_config = [
+	'dbname'    => '?',
+	'dbuser'    => '?',
+	'dbpass'    => '',
+	'dbhost'    => 'localhost',
+	'dbprefix'  => 'wp_',
+	'dbcharset' => 'utf8',
+	'dbcollate' => '',
+	'locale'    => '',
+];
+
+$arg_index = 3;
+foreach ( $wp_config as $config_name => $config_value )
+{
+	$arg_value = isset( $argv[ $arg_index ] ) ? $argv[ $arg_index ] : null;
+	if ( '?' === $config_value && null === $arg_value )
+	{
+		dd( sprintf( 'Missing config [%s] argument number [%s]', $config_name, $arg_index ) );
+	}
+
+	// save config value
+	$wp_config[ $config_name ] = null !== $arg_value ? $arg_value : $config_value;
+
+	// next argument
+	$arg_index++;
+}
+unset( $config_name, $config_value, $arg_value, $arg_index );
 
 if ( null === $instance_name )
 {
 	// none passed
-	die( 'ERROR: invalid instance name!' );
+	dd( 'ERROR: invalid instance name!' );
 }
 
 // current working directory
@@ -22,41 +53,52 @@ $temp_path = $current_dir . DIRECTORY_SEPARATOR . 'wordpress';
 
 if ( $new_instance && file_exists( $full_path ) )
 {
-	die( 'Error: instance directory already exists' );
+	dd( 'Error: instance directory already exists' );
 }
 
 if ( !$new_instance && !file_exists( $full_path ) )
 {
-	die( 'Error: Can not find instance directory to update' );
+	dd( 'Error: Can not find instance directory to update' );
 }
 
 if ( $new_instance && file_exists( $temp_path ) )
 {
-	die( 'Error: instance temp directory already exists' );
+	dd( 'Error: instance temp directory already exists' );
 }
 
 if ( $new_instance )
 {
+	dump( 'Create new instance' );
+
+	dump( 'Checking for WordPress latest version ...' );
+
 	// WP info
 	$wp_info = unserialize( file_get_contents( 'https://api.wordpress.org/core/version-check/1.6/' ) );
 	if ( !is_array( $wp_info ) )
 	{
-		die( 'ERROR: unable to load latest WP status' );
+		dd( 'ERROR: unable to load latest WP status' );
 	}
 
+	$wp_info = $wp_info['offers'][0];
+	dump( 'Last version is: ' . $wp_info['current'] );
+
 	// first offer
-	$wp_info      = $wp_info['offers'][0];
 	$package_name = __DIR__ . DIRECTORY_SEPARATOR . sprintf( 'wordpress-%s.zip', $wp_info['current'] );
 
-	if ( !file_exists( $package_name ) )
+	if ( file_exists( $package_name ) )
+	{
+		// already downloaded
+		dump( 'Use cached copy.' );
+	}
+	else
 	{
 		// download the last version first
-		echo 'Latest wp version zip file not found, Downloading > ', $wp_info['download'], PHP_EOL;
+		dump( 'Downloading zip file > ' . $wp_info['download'] );
 
 		// start downloading
 		file_put_contents( $package_name, file_get_contents( $wp_info['download'] ) );
 
-		echo 'Download done', PHP_EOL;
+		dump( 'Download done' );
 	}
 
 	// ZIP instance
@@ -65,27 +107,49 @@ if ( $new_instance )
 
 	if ( true === $open_zip )
 	{
-		echo 'Extracting zip file ...', PHP_EOL;
+		dump( 'Extracting zip file ...' );
 		$zip->extractTo( $current_dir );
 		$zip->close();
 	}
 	else
 	{
-		die( 'Error: unable to open package zip file, ' . $open_zip );
+		dd( 'Error: unable to open package zip file, ' . $open_zip );
 	}
 
-	echo 'Extraction completed', PHP_EOL;
+	dump( 'Extraction completed' );
 
 	if ( rename( $current_dir . DIRECTORY_SEPARATOR . 'wordpress', $full_path ) )
 	{
-		printf( 'Instance renamed to "%s"', $instance_name );
+		dump( sprintf( 'Instance renamed to "%s"', $instance_name ) );
 	}
 	else
 	{
-		die( 'Error: Unable to rename extracted directory.' );
+		dd( 'Error: Unable to rename extracted directory.' );
 	}
 }
-else
+
+// cwd to the instance
+chdir( $full_path );
+
+// check if WP CLI installed
+$wpcli_check = shell_exec( 'wp core' );
+if ( strpos( $wpcli_check, 'wp core config' ) === false )
 {
-	dump( 'update instance' );
+	dd( 'Error: WP CLI is not installed' );
 }
+
+$config_cmd = 'wp core config';
+foreach ( $wp_config as $config_name => $config_value )
+{
+	$config_cmd .= sprintf( ' --%s="%s"', $config_name, $config_value );
+}
+
+dd( shell_exec( $config_cmd ) );
+
+if ( !function_exists( 'dd' ) ):
+	function dd( $args )
+	{
+		call_user_func_array( 'dump', func_get_args() );
+		die();
+	}
+endif;
