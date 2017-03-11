@@ -70,13 +70,13 @@ $cli->lightGreenTable( [
 		'Client Amount',
 		'CA',
 		'FC + 15%',
-		amount( $estimate_final ),
+		amount( $estimate_final + ( $estimate_final * 0.15 ) ),
 	],
 	[
 		'Earned amount',
 		'EA',
 		'FC - 10%',
-		amount( $estimate_final ),
+		amount( $estimate_final - ( $estimate_final * 0.10 ) ),
 	],
 ] );
 
