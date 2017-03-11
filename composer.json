@@ -1,7 +1,9 @@
 {
     "name": "nabeel/autoload_libs",
     "require": {
-        "symfony/var-dumper": ">=3.0-stable"
+        "symfony/var-dumper": ">=3.0-stable",
+        "league/climate": "^3.2",
+        "nategood/commando": "*"
     },
     "license": "MIT",
     "authors": [
