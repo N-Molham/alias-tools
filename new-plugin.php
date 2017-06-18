@@ -18,12 +18,15 @@ $cmd = new \League\CLImate\CLImate();
 
 // plugin info
 $plugin_info = [
-	'plugin_name'   => '*Plugin Name',
-	'plugin_desc'   => 'Plugin Description',
-	'plugin_slug'   => 'Plugin Slug (leave empty to generate from plugin\'s name)',
-	'text_domain'   => 'Text Domain (leave empty use plugin\'s slug)',
-	'naming_prefix' => '*Naming Prefix',
-	'namespace'     => '*Namespace',
+	'plugin_name'    => '*Plugin Name',
+	'plugin_desc'    => 'Plugin Description',
+	'plugin_slug'    => 'Plugin Slug (leave empty to generate from plugin\'s name)',
+	'text_domain'    => 'Text Domain (leave empty use plugin\'s slug)',
+	'naming_prefix'  => 'Naming Prefix (leave empty to generate from plugin\'s name)',
+	'namespace'      => 'Namespace (leave empty to generate from plugin\'s name)',
+	'author_name'    => 'Plugin Author Name',
+	'author_email'   => 'Plugin Author Email',
+	'author_website' => 'Plugin Author Website',
 ];
 
 foreach ( $plugin_info as $info_key => $info_label )
@@ -37,6 +40,15 @@ foreach ( $plugin_info as $info_key => $info_label )
 
 	switch ( $info_key )
 	{
+		case 'author_name':
+			$info_value = empty( $info_value ) ? 'Nabeel Molham' : mb_convert_case( $info_value, MB_CASE_TITLE );
+			break;
+		case 'author_email':
+			$info_value = empty( $info_value ) ? 'n.molham@gmail.com' : filter_var( $info_value, FILTER_SANITIZE_EMAIL );
+			break;
+		case 'author_website':
+			$info_value = empty( $info_value ) ? 'https://nabeel.molham.me/' : filter_var( $info_value, FILTER_SANITIZE_URL );
+			break;
 		case 'plugin_slug':
 			if ( empty( $info_value ) )
 			{
@@ -52,12 +64,29 @@ foreach ( $plugin_info as $info_key => $info_label )
 			}
 			break;
 		case 'naming_prefix':
-			// sanitize
-			$info_value = preg_replace( '/[^a-z_]/', '', mb_strtolower( preg_match( '/_$/', $info_value ) ? $info_value : $info_value . '_' ) );
+			if ( empty( $info_value ) )
+			{
+				// generate based on plugin's name
+				preg_match_all( '/[A-Z]/', $plugin_info['plugin_name'], $matches );
+				$info_value = mb_strtolower( implode( '', array_map( 'trim', $matches[0] ) ) ) . '_';
+			}
+			else
+			{
+				// sanitize
+				$info_value = preg_replace( '/[^a-z_]/', '', mb_strtolower( preg_match( '/_$/', $info_value ) ? $info_value : $info_value . '_' ) );
+			}
+			break;
+		case 'namespace':
+			if ( empty( $info_value ) )
+			{
+				// generate based on plugin's name
+				$info_value = preg_replace( '/\s+/', '_', mb_convert_case( mb_strtolower( $info_value ), MB_CASE_TITLE ) );
+			}
 			break;
 	}
 
 	$plugin_info[ $info_key ] = $info_value;
+	unset( $info_value, $is_required, $info_label );
 }
 
 create_repo( $plugin_info );
@@ -107,15 +136,18 @@ function create_repo( $plugin_info )
 
 	// generate replace array
 	$replace_matches = [
-		'WP Plugins Boilerplate' => $plugin_info['plugin_name'],
-		'Plugin Description'     => $plugin_info['plugin_desc'],
-		'init.php'               => $plugin_info['plugin_slug'] . '.php',
-		'wp_plugin_boilerplate'  => str_replace( '-', '_', $plugin_info['plugin_slug'] ),
-		'wp-plugin-boilerplate'  => $plugin_info['plugin_slug'],
-		'wp-plugin-domain'       => $plugin_info['text_domain'],
-		'wppb_'                  => $plugin_info['naming_prefix'],
-		'WPPB_'                  => mb_strtoupper( $plugin_info['naming_prefix'] ),
-		'WP_Plugins\Boilerplate' => $plugin_info['namespace'],
+		'WP Plugins Boilerplate'   => $plugin_info['plugin_name'],
+		'Plugin Description'       => $plugin_info['plugin_desc'],
+		'init.php'                 => $plugin_info['plugin_slug'] . '.php',
+		'wp_plugin_boilerplate'    => str_replace( '-', '_', $plugin_info['plugin_slug'] ),
+		'wp-plugin-boilerplate'    => $plugin_info['plugin_slug'],
+		'wp-plugin-domain'         => $plugin_info['text_domain'],
+		'wppb_'                    => $plugin_info['naming_prefix'],
+		'WPPB_'                    => mb_strtoupper( $plugin_info['naming_prefix'] ),
+		'WP_Plugins\Boilerplate'   => $plugin_info['namespace'],
+		'Nabeel Molham'            => $plugin_info['author_name'],
+		'http://nabeel.molham.me/' => $plugin_info['author_website'],
+		'n.molham@gmail.com'       => $plugin_info['author_email'],
 	];
 
 	$cmd->info( 'Loading PHP & JS files...' );
@@ -188,7 +220,7 @@ function prompt_input( $hint, $is_required = false, $valid_regex = '' )
 		return prompt_input( $hint, $is_required );
 	}
 
-	if ( !empty( $valid_regex ) && !preg_match( $valid_regex, $input_value ) )
+	if ( !empty( $input_value ) && !empty( $valid_regex ) && !preg_match( $valid_regex, $input_value ) )
 	{
 		$cmd->error( 'Not a valid input' );
 
