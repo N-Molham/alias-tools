@@ -3,7 +3,8 @@
     "require": {
         "symfony/var-dumper": ">=3.0-stable",
         "league/climate": "^3.2",
-        "nategood/commando": "*"
+        "nategood/commando": "*",
+        "easygit/easygit" : "dev-master"
     },
     "license": "MIT",
     "authors": [
