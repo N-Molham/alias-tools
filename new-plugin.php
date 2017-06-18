@@ -29,26 +29,30 @@ $plugin_info = [
 	'author_website' => 'Plugin Author Website',
 ];
 
+// default values
+$plugin_defaults = [
+	'author_name'    => 'Nabeel Molham',
+	'author_email'   => 'n.molham@gmail.com',
+	'author_website' => 'https://nabeel.molham.me/',
+];
+
 foreach ( $plugin_info as $info_key => $info_label )
 {
 	// check if input is required or not
 	$is_required = 0 === strpos( $info_label, '*' );
 	$info_label  = str_replace( '*', '', $info_label );
 
-	// fetch info
+	// requires info
 	$info_value = prompt_input( $info_label, $is_required, 'namespace' === $info_key ? '/^[a-zA-Z][a-zA-Z0-9_]+((\\[a-zA-Z][a-zA-Z0-9_]+)+)*/' : '' );
+
+	if ( empty( $info_value ) && array_key_exists( $info_key, $plugin_defaults ) )
+	{
+		// use default value then
+		$info_value = $plugin_defaults[ $info_key ];
+	}
 
 	switch ( $info_key )
 	{
-		case 'author_name':
-			$info_value = empty( $info_value ) ? 'Nabeel Molham' : mb_convert_case( $info_value, MB_CASE_TITLE );
-			break;
-		case 'author_email':
-			$info_value = empty( $info_value ) ? 'n.molham@gmail.com' : filter_var( $info_value, FILTER_SANITIZE_EMAIL );
-			break;
-		case 'author_website':
-			$info_value = empty( $info_value ) ? 'https://nabeel.molham.me/' : filter_var( $info_value, FILTER_SANITIZE_URL );
-			break;
 		case 'plugin_slug':
 			if ( empty( $info_value ) )
 			{
