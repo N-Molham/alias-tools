@@ -1,13 +1,13 @@
 <?php
 
 // autoload packages
-require_once 'vendor/autoload.php';
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
 
 // Command Line tool initialization
 $cli = new League\CLImate\CLImate;
 
 // target estimate
-$estimate_best = isset( $argv[1] ) ? abs( floatval( $argv[1] ) ) : null;
+$estimate_best = isset( $argv[1] ) ? abs( (float) $argv[1] ) : null;
 if ( empty( $estimate_best ) )
 {
 	// prompt message
@@ -16,7 +16,7 @@ if ( empty( $estimate_best ) )
 	// accept only positive float/int number
 	$input->accept( function ( $response )
 	{
-		$response = abs( floatval( $response ) );
+		$response = abs( (float) $response );
 
 		return $response > 0;
 	} );
