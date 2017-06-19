@@ -36,6 +36,28 @@ $plugin_defaults = [
 	'author_website' => 'https://nabeel.molham.me/',
 ];
 
+// list of recommended prefixed
+$fixed_prefixes = [
+	'woocommerce'                => 'wc',
+	'buddypress'                 => 'bp',
+	'gravityforms'               => 'gforms',
+	'gravity forms'              => 'gforms',
+	'easydigitaldownloads'       => 'eed',
+	'easy digital downloads'     => 'eed',
+	'contact form 7'             => 'cf7',
+	'advanced custom fields'     => 'acf',
+	'advanced custom fields pro' => 'acf_pro',
+	'w3 total cache'             => 'w3tc',
+	'ninja forms'                => 'nf',
+	'mailchimp'                  => 'mc',
+	'userpro'                    => 'userpro',
+	'ultimate member'            => 'um',
+	'badgeos'                    => 'badgeos',
+	'wp job manager'             => 'wpjm',
+	'listify'                    => 'listify',
+	'visual composer'            => 'vc',
+];
+
 foreach ( $plugin_info as $info_key => $info_label )
 {
 	// check if input is required or not
@@ -53,6 +75,9 @@ foreach ( $plugin_info as $info_key => $info_label )
 
 	switch ( $info_key )
 	{
+		case 'plugin_name':
+			$info_value = ucwords( $info_value );
+			break;
 		case 'plugin_slug':
 			if ( empty( $info_value ) )
 			{
@@ -70,9 +95,22 @@ foreach ( $plugin_info as $info_key => $info_label )
 		case 'naming_prefix':
 			if ( empty( $info_value ) )
 			{
+				$plugin_name = $plugin_info['plugin_name'];
+				foreach ( $fixed_prefixes as $prefix_name => $prefix )
+				{
+					if ( false !== stripos( $plugin_name, $prefix_name ) )
+					{
+						// use recommended one
+						$info_value  = $prefix . '_';
+						$plugin_name = trim( str_ireplace( $prefix_name, '', $plugin_name ) );
+						break;
+					}
+				}
+				unset( $prefix_name, $prefix );
+
 				// generate based on plugin's name
-				preg_match_all( '/[A-Z]/', $plugin_info['plugin_name'], $matches );
-				$info_value = mb_strtolower( implode( '', array_map( 'trim', $matches[0] ) ) ) . '_';
+				preg_match_all( '/[A-Z]/', $plugin_name, $matches );
+				$info_value .= mb_strtolower( implode( '', array_map( 'trim', $matches[0] ) ) ) . '_';
 			}
 			else
 			{
