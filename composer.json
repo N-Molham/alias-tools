@@ -4,7 +4,8 @@
         "symfony/var-dumper": ">=3.0-stable",
         "league/climate": "^3.2",
         "nategood/commando": "*",
-        "easygit/easygit" : "dev-master"
+        "easygit/easygit" : "dev-master",
+        "pantheon-systems/terminus": "^1.8"
     },
     "license": "MIT",
     "authors": [

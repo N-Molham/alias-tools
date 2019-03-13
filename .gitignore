@@ -4,3 +4,6 @@ vendor/
 *.zip
 wp-cli.phar
 ngrok.exe
+wpg
+wpg.bat
+installer.phar
