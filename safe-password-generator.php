@@ -50,7 +50,6 @@ class Safe_Password_Generator {
 
 		return $password;
 
-
 	}
 
 	/**
