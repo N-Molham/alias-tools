@@ -7,214 +7,225 @@
  */
 
 use EasyGit\Repository;
+use League\CLImate\CLImate;
 
-error_reporting( E_ALL );
+error_reporting(E_ALL);
 
 // to load packages
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
+require_once __DIR__.DIRECTORY_SEPARATOR.'vendor/autoload.php';
 
 // command interface instance
-$cmd = new \League\CLImate\CLImate();
+$cmd = new CLImate();
 
 // plugin info
-$plugin_info = [
-	'plugin_name'    => '*Plugin Name',
-	'plugin_desc'    => 'Plugin Description',
-	'plugin_slug'    => 'Plugin Slug (leave empty to generate from plugin\'s name)',
-	'text_domain'    => 'Text Domain (leave empty use plugin\'s slug)',
-	'naming_prefix'  => 'Naming Prefix (leave empty to generate from plugin\'s name)',
-	'namespace'      => 'Namespace (leave empty to generate from plugin\'s name)',
-	'author_name'    => 'Plugin Author Name',
-	'author_email'   => 'Plugin Author Email',
-	'author_website' => 'Plugin Author Website',
+$pluginInfo = [
+    'plugin_name'    => '*Plugin Name',
+    'plugin_desc'    => 'Plugin Description',
+    'plugin_slug'    => 'Plugin Slug (leave empty to generate from plugin\'s name)',
+    'text_domain'    => 'Text Domain (leave empty use plugin\'s slug)',
+    'naming_prefix'  => 'Naming Prefix (leave empty to generate from plugin\'s name)',
+    'namespace'      => 'Namespace (leave empty to generate from plugin\'s name)',
+    'author_name'    => 'Plugin Author Name',
+    'author_email'   => 'Plugin Author Email',
+    'author_website' => 'Plugin Author Website',
 ];
 
 // default values
-$plugin_defaults = [
-	'author_name'    => 'Nabeel Molham',
-	'author_email'   => 'n.molham@gmail.com',
-	'author_website' => 'https://nabeel.molham.me/',
+$pluginDefaults = [
+    'author_name'    => 'Nabeel Molham',
+    'author_email'   => 'n.molham@gmail.com',
+    'author_website' => 'https://nabeel.molham.me/',
 ];
 
 // list of recommended prefixed
-$fixed_prefixes = [
-	'woocommerce'                => 'wc',
-	'buddypress'                 => 'bp',
-	'gravityforms'               => 'gforms',
-	'gravity forms'              => 'gforms',
-	'easydigitaldownloads'       => 'eed',
-	'easy digital downloads'     => 'eed',
-	'contact form 7'             => 'cf7',
-	'advanced custom fields'     => 'acf',
-	'advanced custom fields pro' => 'acf_pro',
-	'w3 total cache'             => 'w3tc',
-	'ninja forms'                => 'nf',
-	'mailchimp'                  => 'mc',
-	'userpro'                    => 'userpro',
-	'ultimate member'            => 'um',
-	'badgeos'                    => 'badgeos',
-	'wp job manager'             => 'wpjm',
-	'listify'                    => 'listify',
-	'visual composer'            => 'vc',
+$fixedPrefixes = [
+    'woocommerce'                => 'wc',
+    'buddypress'                 => 'bp',
+    'gravityforms'               => 'gforms',
+    'gravity forms'              => 'gforms',
+    'easydigitaldownloads'       => 'eed',
+    'easy digital downloads'     => 'eed',
+    'contact form 7'             => 'cf7',
+    'advanced custom fields'     => 'acf',
+    'advanced custom fields pro' => 'acf_pro',
+    'w3 total cache'             => 'w3tc',
+    'ninja forms'                => 'nf',
+    'mailchimp'                  => 'mc',
+    'userpro'                    => 'userpro',
+    'ultimate member'            => 'um',
+    'badgeos'                    => 'badgeos',
+    'wp job manager'             => 'wpjm',
+    'listify'                    => 'listify',
+    'visual composer'            => 'vc',
 ];
 
-foreach ( $plugin_info as $info_key => $info_label ) {
-	// check if input is required or not
-	$is_required = 0 === strpos( $info_label, '*' );
-	$info_label  = str_replace( '*', '', $info_label );
+foreach ($pluginInfo as $infoKey => $infoLabel) {
+    // check if input is required or not
+    $isRequired = 0 === strpos($infoLabel, '*');
+    $infoLabel = str_replace('*', '', $infoLabel);
 
-	// requires info
-	$info_value = prompt_input( $info_label, $is_required, 'namespace' === $info_key ? '/^[a-zA-Z][a-zA-Z0-9_]+((\\[a-zA-Z][a-zA-Z0-9_]+)+)*/' : '' );
+    // requires info
+    try {
+        $infoValue = prompt_input($infoLabel, $isRequired, 'namespace' === $infoKey ? '/^[a-zA-Z][a-zA-Z0-9_]+((\\[a-zA-Z][a-zA-Z0-9_]+)+)*/' : '');
+    } catch (Exception $exception) {
+        $cmd->error($exception->getMessage());
+        exit;
+    }
 
-	if ( empty( $info_value ) && array_key_exists( $info_key, $plugin_defaults ) ) {
-		// use default value then
-		$info_value = $plugin_defaults[ $info_key ];
-	}
+    if (empty($infoValue) && array_key_exists($infoKey, $pluginDefaults)) {
+        // use default value then
+        $infoValue = $pluginDefaults[$infoKey];
+    }
 
-	switch ( $info_key ) {
-		case 'plugin_name':
-			$info_value = ucwords( $info_value );
-			break;
-		case 'plugin_slug':
-			if ( empty( $info_value ) ) {
-				// generate the slug from plugin's name
-				$info_value = preg_replace( [ '/[^a-z0-9_\-]/', '/-+/' ], [
-					'',
-					'-',
-				], preg_replace( '/\s+/', '-', mb_strtolower( $plugin_info['plugin_name'] ) ) );
-			}
-			break;
-		case 'text_domain':
-			if ( empty( $info_value ) ) {
-				// use plugin's slug
-				$info_value = $plugin_info['plugin_slug'];
-			}
-			break;
-		case 'naming_prefix':
-			if ( empty( $info_value ) ) {
-				$plugin_name = $plugin_info['plugin_name'];
-				foreach ( $fixed_prefixes as $prefix_name => $prefix ) {
-					if ( false !== stripos( $plugin_name, $prefix_name ) ) {
-						// use recommended one
-						$info_value  = $prefix . '_';
-						$plugin_name = trim( str_ireplace( $prefix_name, '', $plugin_name ) );
-						break;
-					}
-				}
-				unset( $prefix_name, $prefix );
+    switch ($infoKey) {
+        case 'plugin_name':
+            $infoValue = ucwords($infoValue);
+            break;
+        case 'plugin_slug':
+            if (empty($infoValue)) {
+                // generate the slug from plugin's name
+                $infoValue = preg_replace(['/[^a-z0-9_\-]/', '/-+/'], [
+                    '',
+                    '-',
+                ], preg_replace('/\s+/', '-', mb_strtolower($pluginInfo['plugin_name'])));
+            }
+            break;
+        case 'text_domain':
+            if (empty($infoValue)) {
+                // use plugin's slug
+                $infoValue = $pluginInfo['plugin_slug'];
+            }
+            break;
+        case 'naming_prefix':
+            if (empty($infoValue)) {
+                $plugin_name = $pluginInfo['plugin_name'];
+                foreach ($fixedPrefixes as $prefix_name => $prefix) {
+                    if (false !== stripos($plugin_name, $prefix_name)) {
+                        // use recommended one
+                        $infoValue = $prefix.'_';
+                        $plugin_name = trim(str_ireplace($prefix_name, '', $plugin_name));
+                        break;
+                    }
+                }
+                unset($prefix_name, $prefix);
 
-				// generate based on plugin's name
-				preg_match_all( '/[A-Z]/', $plugin_name, $matches );
-				$info_value .= mb_strtolower( implode( '', array_map( 'trim', $matches[0] ) ) ) . '_';
-			} else {
-				// sanitize
-				$info_value = preg_replace( '/[^a-z_]/', '', mb_strtolower( preg_match( '/_$/', $info_value ) ? $info_value : $info_value . '_' ) );
-			}
-			break;
-		case 'namespace':
-			if ( empty( $info_value ) ) {
-				// generate based on plugin's name
-				$info_value = preg_replace( '/\s+/', '_', str_replace( '-', '', $plugin_info['plugin_name'] ) );
-			}
-			break;
-	}
+                // generate based on plugin's name
+                preg_match_all('/[A-Z]/', $plugin_name, $matches);
+                $infoValue .= mb_strtolower(implode('', array_map('trim', $matches[0]))).'_';
+            } else {
+                // sanitize
+                $infoValue = preg_replace('/[^a-z_]/', '', mb_strtolower(preg_match('/_$/', $infoValue) ? $infoValue : $infoValue.'_'));
+            }
+            break;
+        case 'namespace':
+            if (empty($infoValue)) {
+                // generate based on plugin's name
+                $infoValue = preg_replace('/\s+/', '_', str_replace('-', '', $pluginInfo['plugin_name']));
+            }
+            break;
+    }
 
-	$plugin_info[ $info_key ] = $info_value;
-	unset( $info_value, $is_required, $info_label );
+    $pluginInfo[$infoKey] = $infoValue;
+    unset($infoValue, $isRequired, $infoLabel);
 }
 
-create_repo( $plugin_info );
+createRepo($pluginInfo);
 
 /**
  * Create plugin
  *
- * @param $plugin_info
+ * @param $pluginInfo
  * @return void
  */
-function create_repo( $plugin_info ) {
-	global $cmd;
+function createRepo($pluginInfo)
+{
+    global $cmd;
 
-	$dir_exists = file_exists( $plugin_info['plugin_slug'] );
+    $dirExists = file_exists($pluginInfo['plugin_slug']);
 
-	if ( $dir_exists ) {
-		$continue = $cmd->input( 'Directory exists with the same name, would you like to continue?' );
-		$continue->accept( [ 'Y', 'N' ], true );
+    if ($dirExists) {
+        $continue = $cmd->input('Directory exists with the same name, would you like to continue?');
+        $continue->accept(['Y', 'N'], true);
 
-		if ( 'n' === mb_strtolower( $continue->prompt() ) ) {
-			$cmd->info( 'Exit' );
+        if ('n' === mb_strtolower($continue->prompt())) {
+            $cmd->info('Exit');
 
-			// skip
-			return;
-		}
-	}
+            // skip
+            return;
+        }
+    }
 
-	if ( false === $dir_exists ) {
-		// clone boilerplate plugin
-		$cmd->info( 'Cloning boilerplate plugin...' );
-		Repository::cloneFromUrl( 'https://github.com/N-Molham/wp-plugins-boilerplate.git', $plugin_info['plugin_slug'] );
-	}
+    if (false === $dirExists) {
+        // clone boilerplate plugin
+        $cmd->info('Cloning boilerplate plugin...');
+        Repository::cloneFromUrl('https://github.com/N-Molham/wp-plugins-boilerplate.git', $pluginInfo['plugin_slug']);
+    }
 
-	$plugin_old_file = $plugin_info['plugin_slug'] . DIRECTORY_SEPARATOR . 'init.php';
-	if ( file_exists( $plugin_old_file ) ) {
-		// rename main file
-		$plugin_new_file = str_replace( 'init.', $plugin_info['plugin_slug'] . '.', $plugin_old_file );
-		$cmd->info( sprintf( 'Renaming plugin\'s main file "%s" > "%s"', $plugin_old_file, $plugin_new_file ) );
-		rename( $plugin_old_file, $plugin_new_file );
-	}
+    $pluginOldFile = $pluginInfo['plugin_slug'].DIRECTORY_SEPARATOR.'init.php';
+    if (file_exists($pluginOldFile)) {
+        // rename main file
+        $plugin_new_file = str_replace('init.', $pluginInfo['plugin_slug'].'.', $pluginOldFile);
+        $cmd->info(sprintf('Renaming plugin\'s main file "%s" > "%s"', $pluginOldFile, $plugin_new_file));
+        rename($pluginOldFile, $plugin_new_file);
+    }
 
-	// generate replace array
-	$replace_matches = [
-		'WP Plugins Boilerplate'   => $plugin_info['plugin_name'],
-		'Plugin Description'       => $plugin_info['plugin_desc'],
-		'init.php'                 => $plugin_info['plugin_slug'] . '.php',
-		'wp_plugin_boilerplate'    => str_replace( '-', '_', $plugin_info['plugin_slug'] ),
-		'wp-plugin-boilerplate'    => $plugin_info['plugin_slug'],
-		'wp-plugin-domain'         => $plugin_info['text_domain'],
-		'wppb_'                    => $plugin_info['naming_prefix'],
-		'WPPB_'                    => mb_strtoupper( $plugin_info['naming_prefix'] ),
-		'WP_Plugins\Boilerplate'   => $plugin_info['namespace'],
-		'Nabeel Molham'            => $plugin_info['author_name'],
-		'http://nabeel.molham.me/' => $plugin_info['author_website'],
-		'n.molham@gmail.com'       => $plugin_info['author_email'],
-	];
+    // generate replace array
+    $replace_matches = [
+        'WP Plugins Boilerplate'    => $pluginInfo['plugin_name'],
+        'Plugin Description'        => $pluginInfo['plugin_desc'],
+        'init.php'                  => $pluginInfo['plugin_slug'].'.php',
+        'wp_plugin_boilerplate'     => str_replace('-', '_', $pluginInfo['plugin_slug']),
+        'wp-plugin-boilerplate'     => $pluginInfo['plugin_slug'],
+        'wp-plugin-domain'          => $pluginInfo['text_domain'],
+        'wppb_'                     => $pluginInfo['naming_prefix'],
+        'WPPB_'                     => mb_strtoupper($pluginInfo['naming_prefix']),
+        'WP_Plugins\Boilerplate'    => $pluginInfo['namespace'],
+        'Nabeel Molham'             => $pluginInfo['author_name'],
+        'https://nabeel.molham.me/' => $pluginInfo['author_website'],
+        'n.molham@gmail.com'        => $pluginInfo['author_email'],
+    ];
 
-	$cmd->info( 'Loading PHP & JS files...' );
+    $cmd->info('Loading PHP & JS files...');
 
-	// get PHP & JS files
-	$plugin_files = array_filter( get_dir_files( $plugin_info['plugin_slug'] ), function ( $file_name ) {
-		return preg_match( '/(\.(php|js|md))$/', $file_name );
-	} );
+    // get PHP & JS files
+    $pluginFiles = array_filter(getDirFiles($pluginInfo['plugin_slug']), static function ($file_name) {
+        return preg_match('/(\.(php|js|md))$/', $file_name);
+    });
 
-	foreach ( $plugin_files as $file_name ) {
-		$cmd->comment( sprintf( 'Replace text in "%s"', $file_name ) );
+    foreach ($pluginFiles as $fileName) {
+        $cmd->comment(sprintf('Replace text in "%s"', $fileName));
 
-		file_put_contents(
-			$file_name,
-			str_replace(
-				array_keys( $replace_matches ),
-				array_values( $replace_matches ),
-				file_get_contents( $file_name )
-			)
-		);
-	}
+        file_put_contents(
+            $fileName,
+            str_replace(
+                array_keys($replace_matches),
+                array_values($replace_matches),
+                file_get_contents($fileName)
+            )
+        );
+    }
 }
 
-function get_dir_files( $dir, &$scan_files = [] ) {
-	$files = scandir( $dir, SCANDIR_SORT_NONE );
+/**
+ * @param $dir
+ * @param array $scan_files
+ * @return array
+ */
+function getDirFiles($dir, array &$scan_files = []) : array
+{
+    $files = scandir($dir, SCANDIR_SORT_NONE);
 
-	foreach ( $files as $file_name ) {
-		$path = realpath( $dir . DIRECTORY_SEPARATOR . $file_name );
-		if ( ! in_array( $file_name, [ '.', '..', '.git' ], true ) ) {
-			if ( is_dir( $path ) ) {
-				get_dir_files( $path, $scan_files );
-				$scan_files[] = $path;
-			} else {
-				$scan_files[] = $path;
-			}
-		}
-	}
+    foreach ($files as $file_name) {
+        $path = realpath($dir.DIRECTORY_SEPARATOR.$file_name);
+        if (! in_array($file_name, ['.', '..', '.git'], true)) {
+            if (is_dir($path)) {
+                getDirFiles($path, $scan_files);
+            }
+            $scan_files[] = $path;
+        }
+    }
 
-	return $scan_files;
+    return $scan_files;
 }
 
 
@@ -222,26 +233,28 @@ function get_dir_files( $dir, &$scan_files = [] ) {
  * Prompt user for input some info
  *
  * @param string $hint
- * @param bool $is_required
- * @param string $valid_regex
+ * @param bool $isRequired
+ * @param string $validRegex
  * @return string
+ * @throws Exception
  */
-function prompt_input( $hint, $is_required = false, $valid_regex = '' ) {
-	global $cmd;
+function prompt_input(string $hint, bool $isRequired = false, string $validRegex = '') : string
+{
+    global $cmd;
 
-	$input_value = ( $cmd->input( $hint . ' >' ) )->prompt();
+    $inputValue = ($cmd->input($hint.' >'))->prompt();
 
-	if ( $is_required && empty( $input_value ) ) {
-		$cmd->error( 'This input is required' );
+    if ($isRequired && empty($inputValue)) {
+        $cmd->error('This input is required');
 
-		return prompt_input( $hint, $is_required );
-	}
+        return prompt_input($hint, $isRequired);
+    }
 
-	if ( ! empty( $input_value ) && ! empty( $valid_regex ) && ! preg_match( $valid_regex, $input_value ) ) {
-		$cmd->error( 'Not a valid input' );
+    if (! empty($inputValue) && ! empty($validRegex) && ! preg_match($validRegex, $inputValue)) {
+        $cmd->error('Not a valid input');
 
-		return prompt_input( $hint, $is_required, $valid_regex );
-	}
+        return prompt_input($hint, $isRequired, $validRegex);
+    }
 
-	return $input_value;
+    return $inputValue;
 }

@@ -1,17 +1,19 @@
 {
-    "name": "nabeel/autoload_libs",
-    "require": {
-        "symfony/var-dumper": ">=3.0-stable",
-        "league/climate": "^3.2",
-        "nategood/commando": "*",
-        "easygit/easygit" : "dev-master",
-        "pantheon-systems/terminus": "^1.8"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Nabeel Molham",
-            "email": "n.molham@gmail.com"
-        }
-    ]
+  "name": "nabeel/autoload_libs",
+  "require": {
+    "php": "^7.4|^8.0",
+    "symfony/var-dumper": ">=3.0-stable",
+    "league/climate": "^3.2",
+    "nategood/commando": "*",
+    "easygit/easygit": "dev-master",
+    "pantheon-systems/terminus": "^1.8",
+    "ext-zip": "*"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Nabeel Molham",
+      "email": "n.molham@gmail.com"
+    }
+  ]
 }
