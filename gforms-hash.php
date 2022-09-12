@@ -9,7 +9,7 @@
 $string = '';
 $private_key = '';
 
-$hash = hash_hmac( 'sha1', $string, $private_key, true );
-$sig = rawurlencode( base64_encode( $hash ) );
+$hash = hash_hmac('sha1', $string, $private_key, true);
+$sig = rawurlencode(base64_encode($hash));
 
 echo $sig;
